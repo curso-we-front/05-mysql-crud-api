@@ -8,7 +8,9 @@
  * @returns {Function} - Handler Express que captura errores automáticamente
  */
 function asyncHandler(fn) {
-  // TODO: implementar
+  return function (req, res, next) {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
 }
 
 module.exports = asyncHandler;

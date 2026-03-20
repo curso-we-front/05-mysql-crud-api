@@ -1,15 +1,15 @@
-require('dotenv').config();
-const mysql = require('mysql2/promise');
+require("dotenv").config();
+const mysql = require("mysql2/promise");
 
 async function migrate() {
   const connection = await mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || "127.0.0.1",
     port: process.env.DB_PORT || 3306,
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || "secret",
   });
 
-  const db = process.env.DB_NAME || 'articles_db';
+  const db = process.env.DB_NAME || "articles_db";
 
   await connection.query(`CREATE DATABASE IF NOT EXISTS \`${db}\``);
   await connection.query(`USE \`${db}\``);
@@ -25,11 +25,11 @@ async function migrate() {
     )
   `);
 
-  console.log('✓ Migración completada.');
+  console.log("✓ Migración completada.");
   await connection.end();
 }
 
 migrate().catch((err) => {
-  console.error('Error en migración:', err.message);
+  console.error("Error en migración COMPLETO:", err);
   process.exit(1);
 });
