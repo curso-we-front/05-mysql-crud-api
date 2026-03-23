@@ -22,16 +22,11 @@ const getAll = asyncHandler(async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const search = req.query.search || "";
 
-  const allArticles = await getAllArticles({ page, limit, search });
-  const total = allArticles.length;
+  const { rows, total } = await getAllArticles({ page, limit, search });
   const totalPages = Math.ceil(total / limit);
 
-  const start = (page - 1) * limit;
-  const end = start + limit;
-  const data = allArticles.slice(start, end);
-
   res.status(200).json({
-    data,
+    data: rows,
     pagination: {
       page,
       limit,
@@ -48,10 +43,10 @@ const getAll = asyncHandler(async (req, res) => {
  * Si no existe, responde 404 con { error: 'Artículo no encontrado' }.
  */
 const getOne = asyncHandler(async (req, res) => {
-  const idArticle = req.params.id;
-  const oneArticle = await getArticleById(idArticle);
+  const id = req.params.id;
+  const oneArticle = await getArticleById(id);
   if (!oneArticle) {
-    return res.status(404).json({ message: "No existe el artículo" });
+    return res.status(404).json({ error: "Artículo no encontrado" });
   }
   res.status(200).json(oneArticle);
 });
@@ -82,16 +77,16 @@ const create = asyncHandler(async (req, res) => {
  * Si no existe, responde 404 con { error: 'Artículo no encontrado' }.
  */
 const update = asyncHandler(async (req, res) => {
-  
   const id = req.params.id;
   const updated = await updateArticle(id, {
     title: req.body.title,
     content: req.body.content,
     author: req.body.author,
+    published: req.body.published,
   });
 
   if (!updated) {
-    return res.status(404).json({ message: "Artículo no encontrado" });
+    return res.status(404).json({ error: "Artículo no encontrado" });
   }
 
   res.status(200).json(updated);
@@ -105,12 +100,12 @@ const update = asyncHandler(async (req, res) => {
  * Si se eliminó, responde 204 sin cuerpo.
  */
 const remove = asyncHandler(async (req, res) => {
-  const idArticle = req.params.id;
+  const id = req.params.id;
 
-  const result = await deleteArticle(idArticle);
+  const result = await deleteArticle(id);
 
   if (!result) {
-    return res.status(404).json({ message: "Artículo no encontrado" });
+    return res.status(404).json({ error: "Artículo no encontrado" });
   }
 
   res.status(204).end();

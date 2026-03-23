@@ -18,18 +18,41 @@ const pool = require("./connection");
  *  - { page = 1, limit = 10, search = "" } = {}
  */
 async function getAllArticles({ page = 1, limit = 10, search = "" } = {}) {
+  const offset = (page - 1) * limit;
   let rows;
+  let total;
 
   if (search) {
     [rows] = await pool.execute(
-      "SELECT * FROM articles WHERE title LIKE ? OR content LIKE ?",
+      `SELECT * FROM articles 
+       WHERE title LIKE ? OR content LIKE ?
+       LIMIT ? OFFSET ?`,
+      [`%${search}%`, `%${search}%`, limit, offset],
+    );
+
+    const [countResult] = await pool.execute(
+      `SELECT COUNT(*) as total 
+       FROM articles 
+       WHERE title LIKE ? OR content LIKE ?`,
       [`%${search}%`, `%${search}%`],
     );
+
+    total = countResult[0].total;
   } else {
-    [rows] = await pool.execute("SELECT * FROM articles");
+    [rows] = await pool.execute(
+      `SELECT * FROM articles 
+       LIMIT ? OFFSET ?`,
+      [limit, offset],
+    );
+
+    const [countResult] = await pool.execute(
+      `SELECT COUNT(*) as total FROM articles`,
+    );
+
+    total = countResult[0].total;
   }
 
-  return rows;
+  return { rows, total };
 }
 
 /**
@@ -42,8 +65,7 @@ async function getAllArticles({ page = 1, limit = 10, search = "" } = {}) {
  *        rows[0] será undefined si no hay resultado → devuelve null
  */
 async function getArticleById(id) {
-  
-  const [rows] = await pool.execute("SELECT * FROM articles where id = ?", [
+  const [rows] = await pool.execute("SELECT * FROM articles WHERE id = ?", [
     id,
   ]);
   return rows[0] || null;
@@ -59,7 +81,6 @@ async function getArticleById(id) {
  *        El resultado de INSERT tiene result.insertId con el id generado
  */
 async function createArticle({ title, content, author, published = false }) {
-  
   const [result] = await pool.execute(
     "INSERT INTO articles (title, content, author, published) VALUES (?, ?, ?, ?)",
     [title, content, author, published],
@@ -84,12 +105,12 @@ async function createArticle({ title, content, author, published = false }) {
  * Pista: UPDATE articles SET title=?, content=?, author=?, published=? WHERE id=?
  *        result.affectedRows === 0 significa que no existía → devuelve null
  */
-async function updateArticle(id, { title, content, author }) {
+async function updateArticle(id, { title, content, author, published }) {
   const [result] = await pool.execute(
     `UPDATE articles 
-     SET title = ?, content = ?, author = ?
+     SET title = ?, content = ?, author = ?, published = ?
      WHERE id = ?`,
-    [title, content, author, id],
+    [title, content, author, published, id],
   );
 
   if (result.affectedRows === 0) {
@@ -110,16 +131,13 @@ async function updateArticle(id, { title, content, author }) {
  *        Comprueba result.affectedRows
  */
 async function deleteArticle(id) {
-  
   const [result] = await pool.execute("DELETE FROM articles WHERE id = ?", [
     id,
   ]);
 
   if (result.affectedRows > 0) {
-    console.log("Se ha borrado el articulo correctamente");
     return true;
   } else {
-    console.log("No se ha borrado el articulo");
     return false;
   }
 }
