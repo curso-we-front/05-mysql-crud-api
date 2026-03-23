@@ -1,22 +1,22 @@
-require('dotenv').config();
-const mysql = require('mysql2/promise');
-const articles = require('../../data/articles.json');
+require("dotenv").config();
+const mysql = require("mysql2/promise");
+const articles = require("../../data/articles.json");
 
 async function seed() {
   const connection = await mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || "127.0.0.1",
     port: process.env.DB_PORT || 3306,
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'articles_db',
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || "secret",
+    database: process.env.DB_NAME || "articles_db",
   });
 
-  await connection.query('TRUNCATE TABLE articles');
+  await connection.query("TRUNCATE TABLE articles");
 
   for (const article of articles) {
     await connection.query(
-      'INSERT INTO articles (title, content, author, published, createdAt) VALUES (?, ?, ?, ?, ?)',
-      [article.title, article.content, article.author, article.published, article.createdAt]
+      "INSERT INTO articles (title, content, author, published) VALUES (?, ?, ?, ?)",
+      [article.title, article.content, article.author, article.published],
     );
   }
 
@@ -25,6 +25,6 @@ async function seed() {
 }
 
 seed().catch((err) => {
-  console.error('Error en seed:', err.message);
+  console.error("Error en seed:", err.message);
   process.exit(1);
 });

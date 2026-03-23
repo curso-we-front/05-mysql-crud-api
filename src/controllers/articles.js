@@ -4,8 +4,8 @@ const {
   createArticle,
   updateArticle,
   deleteArticle,
-} = require('../db/queries');
-const asyncHandler = require('../utils/asyncHandler');
+} = require("../db/queries");
+const asyncHandler = require("../utils/asyncHandler");
 
 /**
  * Tarea 1 & 3 & 4 — GET /articles
@@ -18,7 +18,22 @@ const asyncHandler = require('../utils/asyncHandler');
  * }
  */
 const getAll = asyncHandler(async (req, res) => {
-  // TODO: implementar
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const search = req.query.search || "";
+
+  const { rows, total } = await getAllArticles({ page, limit, search });
+  const totalPages = Math.ceil(total / limit);
+
+  res.status(200).json({
+    data: rows,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  });
 });
 
 /**
@@ -28,7 +43,12 @@ const getAll = asyncHandler(async (req, res) => {
  * Si no existe, responde 404 con { error: 'Artículo no encontrado' }.
  */
 const getOne = asyncHandler(async (req, res) => {
-  // TODO: implementar
+  const id = req.params.id;
+  const oneArticle = await getArticleById(id);
+  if (!oneArticle) {
+    return res.status(404).json({ error: "Artículo no encontrado" });
+  }
+  res.status(200).json(oneArticle);
 });
 
 /**
@@ -38,7 +58,16 @@ const getOne = asyncHandler(async (req, res) => {
  * Responde 201 con el artículo creado.
  */
 const create = asyncHandler(async (req, res) => {
-  // TODO: implementar
+  const { title, content, author, published } = req.body;
+
+  const createdArticle = await createArticle({
+    title,
+    content,
+    author,
+    published,
+  });
+
+  res.status(201).json(createdArticle);
 });
 
 /**
@@ -48,7 +77,19 @@ const create = asyncHandler(async (req, res) => {
  * Si no existe, responde 404 con { error: 'Artículo no encontrado' }.
  */
 const update = asyncHandler(async (req, res) => {
-  // TODO: implementar
+  const id = req.params.id;
+  const updated = await updateArticle(id, {
+    title: req.body.title,
+    content: req.body.content,
+    author: req.body.author,
+    published: req.body.published,
+  });
+
+  if (!updated) {
+    return res.status(404).json({ error: "Artículo no encontrado" });
+  }
+
+  res.status(200).json(updated);
 });
 
 /**
@@ -59,7 +100,15 @@ const update = asyncHandler(async (req, res) => {
  * Si se eliminó, responde 204 sin cuerpo.
  */
 const remove = asyncHandler(async (req, res) => {
-  // TODO: implementar
+  const id = req.params.id;
+
+  const result = await deleteArticle(id);
+
+  if (!result) {
+    return res.status(404).json({ error: "Artículo no encontrado" });
+  }
+
+  res.status(204).end();
 });
 
 module.exports = { getAll, getOne, create, update, remove };
