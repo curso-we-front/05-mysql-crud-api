@@ -1,11 +1,12 @@
+const { pool } = require("../db/connection");
 const {
   getAllArticles,
   getArticleById,
   createArticle,
   updateArticle,
   deleteArticle,
-} = require('../db/queries');
-const asyncHandler = require('../utils/asyncHandler');
+} = require("../db/queries");
+const asyncHandler = require("../utils/asyncHandler");
 
 /**
  * Tarea 1 & 3 & 4 — GET /articles
@@ -17,8 +18,17 @@ const asyncHandler = require('../utils/asyncHandler');
  *   pagination: { page, limit, total, totalPages }
  * }
  */
+
 const getAll = asyncHandler(async (req, res) => {
   // TODO: implementar
+  const params = {
+    page: parseInt(req.query.page) || 1,
+    limit: parseInt(req.query.limit) || 10,
+    search: req.query.search || "",
+  };
+
+  const articles = await getAllArticles(params);
+  return res.json(articles);
 });
 
 /**
@@ -29,6 +39,12 @@ const getAll = asyncHandler(async (req, res) => {
  */
 const getOne = asyncHandler(async (req, res) => {
   // TODO: implementar
+  const id = req.params.id;
+  const article = await getArticleById(id);
+  if (!article) {
+    return res.status(404).json({ error: "Artículo no encontrado" });
+  }  
+  return res.json(article[0]);
 });
 
 /**
@@ -39,6 +55,8 @@ const getOne = asyncHandler(async (req, res) => {
  */
 const create = asyncHandler(async (req, res) => {
   // TODO: implementar
+  const newArticle = await createArticle(req.body);
+  return res.status(201).json(newArticle);
 });
 
 /**
@@ -49,6 +67,12 @@ const create = asyncHandler(async (req, res) => {
  */
 const update = asyncHandler(async (req, res) => {
   // TODO: implementar
+  const id = req.params.id;
+  const updatedArticle = await updateArticle(id, req.body);
+  if (!updatedArticle) {
+    return res.status(404).json({ error: "Artículo no encontrado" });
+  }
+  res.json(updatedArticle[0]);
 });
 
 /**
@@ -60,6 +84,12 @@ const update = asyncHandler(async (req, res) => {
  */
 const remove = asyncHandler(async (req, res) => {
   // TODO: implementar
+  const id = req.params.id;
+  const isRemoved = await deleteArticle(id);
+  if (!isRemoved) {
+    return res.status(404).json({ error: "Artículo no encontrado" });
+  }
+  return res.status(204).json();
 });
 
 module.exports = { getAll, getOne, create, update, remove };

@@ -16,7 +16,7 @@ async function seed() {
   for (const article of articles) {
     await connection.query(
       'INSERT INTO articles (title, content, author, published, createdAt) VALUES (?, ?, ?, ?, ?)',
-      [article.title, article.content, article.author, article.published, article.createdAt]
+      [article.title, article.content, article.author, article.published, new Date(article.createdAt)]
     );
   }
 

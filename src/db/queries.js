@@ -1,4 +1,4 @@
-const pool = require('./connection');
+const pool = require("./connection");
 
 /**
  * Tarea 1 & 3 & 4 — Obtener artículos con búsqueda y paginación.
@@ -16,8 +16,31 @@ const pool = require('./connection');
  *  - Ejecuta también un COUNT(*) con las mismas condiciones para obtener total
  *  - pool.query() devuelve [rows, fields]; desestructura solo rows
  */
-async function getAllArticles({ page = 1, limit = 10, search = '' } = {}) {
+
+async function getAllArticles({ page = 1, limit = 10, search = "" } = {}) {
   // TODO: implementar
+  let sql = "SELECT * FROM articles";
+  const countSQL = "SELECT COUNT(*) as total FROM articles";
+  let params = [];
+  if (search) {
+    sql += " WHERE title LIKE ? OR content LIKE ?";
+    params = [`%${search}%`, `%${search}%`];
+  }
+  sql += " LIMIT ? OFFSET ?";
+  params.push(limit, (page - 1) * limit);
+
+  const [articles] = await pool.query(sql, params);
+  const [[{ total }]] = await pool.query(countSQL);
+
+  return {
+    data: articles,
+    pagination: {
+      page: page,
+      limit: limit,
+      total: total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 }
 
 /**
@@ -31,6 +54,9 @@ async function getAllArticles({ page = 1, limit = 10, search = '' } = {}) {
  */
 async function getArticleById(id) {
   // TODO: implementar
+  const sql = "SELECT * FROM articles WHERE id = ?";
+  const [article] = await pool.query(sql, [id]);
+  return article.length ? article : null;
 }
 
 /**
@@ -44,6 +70,11 @@ async function getArticleById(id) {
  */
 async function createArticle({ title, content, author, published = false }) {
   // TODO: implementar
+  const sql =
+    "INSERT INTO articles (title, content, author, published) values (?, ?, ?, ?)";
+  const [result] = await pool.query(sql, [title, content, author, published]);
+  const [article] = await getArticleById(result.insertId);
+  return article;
 }
 
 /**
@@ -58,6 +89,19 @@ async function createArticle({ title, content, author, published = false }) {
  */
 async function updateArticle(id, { title, content, author, published }) {
   // TODO: implementar
+  const sql =
+    "UPDATE articles SET title = ?, content = ?, author=?, published=? WHERE id=?";
+  const [result] = await pool.query(sql, [
+    title,
+    content,
+    author,
+    published,
+    id,
+  ]);
+  if (!result.affectedRows) {
+    return null;
+  }
+  return getArticleById(id);
 }
 
 /**
@@ -71,6 +115,15 @@ async function updateArticle(id, { title, content, author, published }) {
  */
 async function deleteArticle(id) {
   // TODO: implementar
+  const sql = "DELETE FROM articles WHERE id = ?";
+  const [response] = await pool.query(sql, [id]);
+  return response.affectedRows > 0;
 }
 
-module.exports = { getAllArticles, getArticleById, createArticle, updateArticle, deleteArticle };
+module.exports = {
+  getAllArticles,
+  getArticleById,
+  createArticle,
+  updateArticle,
+  deleteArticle,
+};
