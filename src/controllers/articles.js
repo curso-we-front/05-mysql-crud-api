@@ -19,6 +19,8 @@ const asyncHandler = require('../utils/asyncHandler');
  */
 const getAll = asyncHandler(async (req, res) => {
   // TODO: implementar
+  const articles = await getAllArticles(req.query)
+  return res.json(articles)
 });
 
 /**
@@ -29,6 +31,12 @@ const getAll = asyncHandler(async (req, res) => {
  */
 const getOne = asyncHandler(async (req, res) => {
   // TODO: implementar
+  const id = req.params.id
+  const article = await getArticleById(id)
+  if(!article){ 
+    return res.status(404).json({ error: 'Artículo no encontrado' })
+  }
+  return res.json(article)
 });
 
 /**
@@ -39,6 +47,9 @@ const getOne = asyncHandler(async (req, res) => {
  */
 const create = asyncHandler(async (req, res) => {
   // TODO: implementar
+  const data = req.body
+  const newArticle = await createArticle(data)
+  return res.status(201).json(newArticle)
 });
 
 /**
@@ -49,6 +60,13 @@ const create = asyncHandler(async (req, res) => {
  */
 const update = asyncHandler(async (req, res) => {
   // TODO: implementar
+  const id = req.params.id
+  const data = req.body
+  const article = await updateArticle(id, data)  
+  if (!article) {
+    return res.status(404).json({ error: 'Artículo no encontrado' })
+  }
+  return res.json(article)
 });
 
 /**
@@ -60,6 +78,12 @@ const update = asyncHandler(async (req, res) => {
  */
 const remove = asyncHandler(async (req, res) => {
   // TODO: implementar
+  const id = req.params.id
+  const isDeleted = await deleteArticle(id)
+  if(!isDeleted){
+    return res.status(404).json({ error: 'Artículo no encontrado' })
+  }
+  return res.status(204).send()
 });
 
 module.exports = { getAll, getOne, create, update, remove };
